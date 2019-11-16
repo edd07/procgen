@@ -66,7 +66,7 @@ def gen_strings(start_string):
         if next_nonterminal is None:
             # Yield a string of terminals
             yield string
-        elif depth < 500:  # Limit depth to avoid infinite recursion
+        elif depth < 20:  # Limit depth to avoid infinite recursion
             # Apply one of the grammar rules to the next nonterminal
             idx = string.index(next_nonterminal)
 
