@@ -12,12 +12,18 @@ class NT(Enum):
     """Enumeration of non-terminal symbols"""
     PROGRAM = auto()
     IMPORT = auto()
+    LITERAL = auto()
     STMTS = auto()
     STMT = auto()
     PREFIX = auto()
     ASSIGN = auto()
     BLOCK = auto()
-    BLOCK_NAME = auto()
+    DEF_BLOCK = auto()
+    DEF_BLOCKS = auto()
+    CLS_BLOCK = auto()
+    WHILE_BLOCK = auto()
+    FOR_BLOCK = auto()
+    TRY_BLOCK = auto()
     DEF = auto()
     CLASS = auto()
     PARAMS = auto()
@@ -26,14 +32,20 @@ class NT(Enum):
 
 grammar = {
     NT.PROGRAM: [[NT.IMPORT, NT.PROGRAM], [NT.STMTS]],
-    NT.IMPORT: [['import ', NT.NAME, '\n']],
+    NT.IMPORT: [['import ', NT.NAME, '\n'], ['from  ', NT.LONG_NAME, ' import ', NT.NAME, '\n']],
+    NT.LITERAL: [['42'], ['True'], ['False'], ['3.14159']],
     NT.STMTS: [[NT.STMT], [NT.BLOCK], [NT.STMT, NT.STMTS], [NT.BLOCK, NT.STMTS]],
-    NT.STMT: [[NT.LONG_NAME, NT.ASSIGN, NT.LONG_NAME, '\n'], [NT.PREFIX, NT.LONG_NAME, '\n'], ['pass', '\n']],
-    NT.PREFIX: [['del '], ['return '], ['raise '], ['assert '], ['global ']],
+    NT.STMT: [[NT.LONG_NAME, NT.ASSIGN, NT.LONG_NAME, '\n'], [NT.PREFIX, NT.LONG_NAME, '\n'], ['pass', '\n'], [NT.LONG_NAME, '(', NT.PARAMS, ')', '\n']],
+    NT.PREFIX: [['del '], ['raise '], ['assert '], ['global ']],
     NT.ASSIGN: [[' = '], [' += '], [' -= '], [' *= '], [' |= '], [' &= ']],
 
-    NT.BLOCK: [[NT.BLOCK_NAME, NT.NAME, '(', NT.PARAMS, '):', INDENT, '\n', NT.STMTS, DEDENT]],
-    NT.BLOCK_NAME: [['def '], ['class ']],
+    NT.BLOCK: [[NT.DEF_BLOCK], [NT.CLS_BLOCK], [NT.TRY_BLOCK], [NT.WHILE_BLOCK], [NT.FOR_BLOCK]],
+    NT.DEF_BLOCK: [['def ', NT.NAME, '(', NT.PARAMS, '):', INDENT, '\n', NT.STMTS, 'return ', NT.LONG_NAME, '\n', DEDENT]],
+    NT.DEF_BLOCKS: [[NT.DEF_BLOCKS, NT.DEF_BLOCK], [NT.DEF_BLOCK]],
+    NT.CLS_BLOCK: [['class ', NT.NAME, '(', NT.PARAMS, '):', INDENT, '\n', NT.DEF_BLOCKS, DEDENT]],
+    NT.WHILE_BLOCK: [['while ', NT.LONG_NAME, NT.ASSIGN, NT.LITERAL, ':', INDENT, '\n', NT.STMTS, DEDENT, '\n']],
+    NT.FOR_BLOCK: [['for ', NT.NAME, ' in ', NT.LONG_NAME, ':', INDENT, '\n', NT.STMTS, DEDENT, '\n']],
+    NT.TRY_BLOCK: [['try:', INDENT, '\n', NT.STMTS, DEDENT, '\n', 'except:', INDENT, '\n', NT.STMT, DEDENT, '\n', 'finally:', INDENT, '\n', NT.STMT, '\n', DEDENT]],
     NT.PARAMS: [[NT.NAME, ', ', NT.PARAMS], [NT.NAME]],
 
     NT.LONG_NAME: [[NT.LONG_NAME, '.', NT.NAME], [NT.NAME]],
